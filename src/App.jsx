@@ -3,7 +3,7 @@ import { client, useConfig, usePaginatedElementData } from '@sigmacomputing/plug
 import { DEMO_EVENTS } from './demoData.js'
 
 const PAGE_SIZE = 25000
-const BUILD = 'v8'
+const BUILD = import.meta.env.VITE_BUILD_STAMP || 'local'
 
 // ===== shared icon system (shape + color + icon_key from data) =====
 const GLYPH = {
