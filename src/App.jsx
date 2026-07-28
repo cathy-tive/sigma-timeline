@@ -3,7 +3,7 @@ import { client, useConfig, usePaginatedElementData } from '@sigmacomputing/plug
 import { DEMO_EVENTS } from './demoData.js'
 
 const PAGE_SIZE = 25000
-const BUILD = 'v5'
+const BUILD = 'v6'
 
 // ===== shared icon system (shape + color + icon_key from data) =====
 const GLYPH = {
@@ -33,29 +33,27 @@ function markerHtml(e, size){
     const slash=missed?'<path d="M4 4 L30 40" stroke="#fff" stroke-width="4" stroke-linecap="round"/>':''; const anchor=e.container?ANCHOR_BADGE:''
     return `<div style="position:relative;width:${w}px;height:${h}px;filter:drop-shadow(0 1px 2px rgba(20,30,60,.35))"><svg viewBox="0 0 34 44" width="${w}" height="${h}"><path d="M17 43C17 43 32 25 32 15A15 15 0 1 0 2 15C2 25 17 43 17 43Z" fill="${color}" stroke="#fff" stroke-width="2.5"/>${slash}</svg><div style="position:absolute;top:${Math.round(h*0.14)}px;left:0;width:${w}px;text-align:center;font-weight:800;font-size:${Math.round(size*0.5)}px;text-shadow:0 1px 1px rgba(0,0,0,.4);color:${missed?'#1a2233':'#fff'}">${num}</div>${anchor}</div>` }
   if(shape==='octagon') return `<div style="width:${size}px;height:${size}px"><svg viewBox="0 0 34 34" width="${size}" height="${size}"><path d="M10 2H24L32 10V24L24 32H10L2 24V10Z" fill="${color}" stroke="#fff" stroke-width="2.5" stroke-linejoin="round"/></svg></div>`
-  if(shape==='triangle') return `<div style="position:relative;width:${size}px;height:${size}px"><svg viewBox="0 0 34 34" width="${size}" height="${size}"><path d="M17 3.5 32.5 31H1.5Z" fill="${color}" stroke="#fff" stroke-width="2.5" stroke-linejoin="round"/></svg><span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding-top:${Math.round(size*0.26)}px">${gsvg(iconKey,Math.round(size*0.48))}</span></div>`
+  if(shape==='triangle') return `<div style="position:relative;width:${size}px;height:${size}px"><svg viewBox="0 0 34 34" width="${size}" height="${size}"><path d="M17 3.5 32.5 31H1.5Z" fill="${color}" stroke="#fff" stroke-width="2.5" stroke-linejoin="round"/></svg><span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding-top:${Math.round(size*0.24)}px">${gsvg(iconKey,Math.round(size*0.44))}</span></div>`
   return `<div style="width:${size}px;height:${size}px;border-radius:50%;border:2.5px solid #fff;box-shadow:0 1px 3px rgba(20,30,60,.3);display:flex;align-items:center;justify-content:center;background:${color}">${gsvg(iconKey,Math.round(size*0.56))}</div>`
 }
 
 const BASE_CONFIG=[
   { name:'events', type:'element' },
-  { name:'eventId', type:'column', source:'events', allowMultiple:false },
-  { name:'parentId', type:'column', source:'events', allowMultiple:false },
-  { name:'eventType', type:'column', source:'events', allowMultiple:false },
-  { name:'order', type:'column', source:'events', allowMultiple:false },
-  { name:'eventEnd', type:'column', source:'events', allowMultiple:false },
-  { name:'status', type:'column', source:'events', allowMultiple:false },
-  { name:'label', type:'column', source:'events', allowMultiple:false },
-  { name:'Style (from data)', type:'group' },
-  { name:'shape', type:'column', source:'events', allowMultiple:false },
-  { name:'color', type:'column', source:'events', allowMultiple:false },
-  { name:'iconKey', type:'column', source:'events', allowMultiple:false },
-  { name:'Attributes', type:'group' },
-  { name:'legMode', type:'column', source:'events', allowMultiple:false },
-  { name:'legNumber', type:'column', source:'events', allowMultiple:false },
-  { name:'waypointNumber', type:'column', source:'events', allowMultiple:false },
-  { name:'isContainerPort', type:'column', source:'events', allowMultiple:false },
-  { name:'durationSec', type:'column', source:'events', allowMultiple:false },
+  { name:'eventType', type:'column', source:'events', allowMultiple:false, label:'Event type (required)' },
+  { name:'order', type:'column', source:'events', allowMultiple:false, label:'Event time (ordering)' },
+  { name:'eventEnd', type:'column', source:'events', allowMultiple:false, label:'Event end' },
+  { name:'status', type:'column', source:'events', allowMultiple:false, label:'Status text' },
+  { name:'label', type:'column', source:'events', allowMultiple:false, label:'Display label' },
+  { name:'eventId', type:'column', source:'events', allowMultiple:false, label:'Event id (for nesting)' },
+  { name:'parentId', type:'column', source:'events', allowMultiple:false, label:'Parent event id (nests children)' },
+  { name:'waypointNumber', type:'column', source:'events', allowMultiple:false, label:'Waypoint number — numbers the pins' },
+  { name:'legMode', type:'column', source:'events', allowMultiple:false, label:'Leg mode — transit symbol' },
+  { name:'legNumber', type:'column', source:'events', allowMultiple:false, label:'Leg number — "Leg N"' },
+  { name:'isContainerPort', type:'column', source:'events', allowMultiple:false, label:'Is container port — anchor badge' },
+  { name:'durationSec', type:'column', source:'events', allowMultiple:false, label:'Duration (sec) — dwell' },
+  { name:'iconKey', type:'column', source:'events', allowMultiple:false, label:'Icon key (optional) — typed alert glyphs' },
+  { name:'shape', type:'column', source:'events', allowMultiple:false, label:'Shape (optional) — overrides default' },
+  { name:'color', type:'column', source:'events', allowMultiple:false, label:'Color (optional) — hex, overrides default' },
   { name:'Header', type:'group' },
   { name:'title', type:'text', placeholder:'Timeline header (defaults to "Event timeline")' },
 ]
@@ -75,7 +73,7 @@ function whenText(e){
   if(e.end)return fmt(e.order)+' – '+fmt(e.end)+(e.dur!=null?' · '+(e.dur/3600).toFixed(0)+' hr':''); return fmt(e.order) }
 function rowHtml(e){
   const mode=e.type==='travel'&&e.legMode?`<span class="badge-mode">${esc(e.legMode)}</span>`:''
-  return `<div class="row"><div class="ico">${markerHtml(e,38)}</div><div class="body"><div class="lbl">${esc(labelOf(e))}${mode}</div><div class="st">${esc(e.status||'')}</div><div class="tm">${whenText(e)}</div></div></div>`
+  return `<div class="row"><div class="ico">${markerHtml(e,30)}</div><div class="body"><div class="lbl">${esc(labelOf(e))}${mode}</div><div class="st">${esc(e.status||'')}</div><div class="tm">${whenText(e)}</div></div></div>`
 }
 
 function usePagedElementData(configId){
