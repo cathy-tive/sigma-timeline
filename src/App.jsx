@@ -3,6 +3,7 @@ import { client, useConfig, usePaginatedElementData } from '@sigmacomputing/plug
 import { DEMO_EVENTS } from './demoData.js'
 
 const PAGE_SIZE = 25000
+const BUILD = 'v4'
 
 // ===== shared icon system (shape + color + icon_key from data) =====
 const GLYPH = {
@@ -32,7 +33,7 @@ function markerHtml(e, size){
     const slash=missed?'<path d="M4 4 L30 40" stroke="#fff" stroke-width="4" stroke-linecap="round"/>':''; const anchor=e.container?ANCHOR_BADGE:''
     return `<div style="position:relative;width:${w}px;height:${h}px;filter:drop-shadow(0 1px 2px rgba(20,30,60,.35))"><svg viewBox="0 0 34 44" width="${w}" height="${h}"><path d="M17 43C17 43 32 25 32 15A15 15 0 1 0 2 15C2 25 17 43 17 43Z" fill="${color}" stroke="#fff" stroke-width="2.5"/>${slash}</svg><div style="position:absolute;top:${Math.round(h*0.14)}px;left:0;width:${w}px;text-align:center;font-weight:800;font-size:${Math.round(size*0.5)}px;text-shadow:0 1px 1px rgba(0,0,0,.4);color:${missed?'#1a2233':'#fff'}">${num}</div>${anchor}</div>` }
   if(shape==='octagon') return `<div style="width:${size}px;height:${size}px"><svg viewBox="0 0 34 34" width="${size}" height="${size}"><path d="M10 2H24L32 10V24L24 32H10L2 24V10Z" fill="${color}" stroke="#fff" stroke-width="2.5" stroke-linejoin="round"/></svg></div>`
-  if(shape==='triangle') return `<div style="position:relative;width:${size}px;height:${size}px"><svg viewBox="0 0 34 34" width="${size}" height="${size}"><path d="M17 3.5 32.5 31H1.5Z" fill="${color}" stroke="#fff" stroke-width="2.5" stroke-linejoin="round"/></svg><span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding-top:${Math.round(size*0.2)}px">${gsvg(iconKey,Math.round(size*0.42))}</span></div>`
+  if(shape==='triangle') return `<div style="position:relative;width:${size}px;height:${size}px"><svg viewBox="0 0 34 34" width="${size}" height="${size}"><path d="M17 3.5 32.5 31H1.5Z" fill="${color}" stroke="#fff" stroke-width="2.5" stroke-linejoin="round"/></svg><span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding-top:${Math.round(size*0.26)}px">${gsvg(iconKey,Math.round(size*0.48))}</span></div>`
   return `<div style="width:${size}px;height:${size}px;border-radius:50%;border:2.5px solid #fff;box-shadow:0 1px 3px rgba(20,30,60,.3);display:flex;align-items:center;justify-content:center;background:${color}">${gsvg(iconKey,Math.round(size*0.56))}</div>`
 }
 
@@ -74,7 +75,7 @@ function whenText(e){
   if(e.end)return fmt(e.order)+' – '+fmt(e.end)+(e.dur!=null?' · '+(e.dur/3600).toFixed(0)+' hr':''); return fmt(e.order) }
 function rowHtml(e){
   const mode=e.type==='travel'&&e.legMode?`<span class="badge-mode">${esc(e.legMode)}</span>`:''
-  return `<div class="row"><div class="ico">${markerHtml(e,34)}</div><div class="body"><div class="lbl">${esc(labelOf(e))}${mode}</div><div class="st">${esc(e.status||'')}</div><div class="tm">${whenText(e)}</div></div></div>`
+  return `<div class="row"><div class="ico">${markerHtml(e,38)}</div><div class="body"><div class="lbl">${esc(labelOf(e))}${mode}</div><div class="st">${esc(e.status||'')}</div><div class="tm">${whenText(e)}</div></div></div>`
 }
 
 function usePagedElementData(configId){
@@ -122,6 +123,7 @@ export default function App(){
     const top=rows.filter(e=>e.parent==null||!byId.has(String(e.parent))).sort((a,b)=>cmp(a,b)||(a.type==='travel'?1:0))
     let out=`<h2>${esc(config.title||'Event timeline')}</h2>`
     for(const e of top){ out+=rowHtml(e); const ch=(kids.get(String(e.id))||[]).slice().sort(cmp); if(ch.length) out+='<div class="indent">'+ch.map(rowHtml).join('')+'</div>' }
+    out+='<div style="text-align:right;color:#c3ccdb;font-size:9px;padding:8px 14px">build '+BUILD+'</div>'
     return out
   },[rows,config.title])
 
