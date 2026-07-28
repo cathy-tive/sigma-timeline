@@ -76,7 +76,8 @@ function labelOf(e) {
 function fmt(t) {
   if (!t) return ''
   const d = new Date(String(t).replace(' ', 'T'))
-  if (Number.isNaN(d.getTime())) return String(t)
+  // whenText() injects fmt() output into HTML, so escape the raw fallback.
+  if (Number.isNaN(d.getTime())) return esc(String(t))
   return d.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
 }
 function durTxt(sec) {
