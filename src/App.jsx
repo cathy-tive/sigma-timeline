@@ -22,15 +22,18 @@ const GLYPH = {
 const MODE_EMOJI = { Ocean:'🚢', Air:'✈️', Road:'🚚', Rail:'🚆' }
 const gsvg = (key,size)=>`<svg viewBox="0 0 24 24" width="${size}" height="${size}" style="stroke:#fff;fill:none;stroke-width:2.1;stroke-linecap:round;stroke-linejoin:round">${GLYPH[key]||''}</svg>`
 const ANCHOR_BADGE='<div style="position:absolute;right:-8px;top:-7px;width:18px;height:18px;border-radius:50%;background:#fff;border:1.5px solid #586176;display:flex;align-items:center;justify-content:center;font-size:11px;line-height:1">&#9875;</div>'
+const DEF_SHAPE={waypoint:'pin',failed_waypoint:'pin',travel:'bare','unplanned stop':'octagon',temp_out_of_range:'triangle',temp_back_in_range:'triangle',alert:'triangle',carrier_change:'circle',loading:'circle',unloading:'circle',arrive:'circle',depart:'circle'}
+const DEF_COLOR={waypoint:'#2563eb',failed_waypoint:'#94a3b8',travel:null,'unplanned stop':'#d97706',temp_out_of_range:'#dc2626',temp_back_in_range:'#0d9488',alert:'#dc2626',carrier_change:'#7c3aed',loading:'#16a34a',unloading:'#16a34a',arrive:'#586176',depart:'#586176'}
+const DEF_ICON={waypoint:'pin',failed_waypoint:'pin-missed',travel:'transit','unplanned stop':'stop',temp_out_of_range:'thermo-up',temp_back_in_range:'thermo-dn',alert:'bell',carrier_change:'handoff',loading:'load',unloading:'unload',arrive:'anchor',depart:'anchor'}
 function markerHtml(e, size){
-  size=size||26; const color=e.color||'#586176'; const shape=e.shape||'circle'
+  size=size||30; const type=e.type; const shape=e.shape||DEF_SHAPE[type]||'circle'; const color=e.color||DEF_COLOR[type]||'#586176'; const iconKey=e.iconKey||DEF_ICON[type]||'bell'
   if(shape==='bare') return `<span style="font-size:${size-2}px;line-height:1">${MODE_EMOJI[e.legMode]||'🧭'}</span>`
-  if(shape==='pin'){ const w=size,h=Math.round(size*1.29),missed=e.iconKey==='pin-missed',num=e.wpNum!=null?e.wpNum:''
+  if(shape==='pin'){ const w=size,h=Math.round(size*1.29),missed=iconKey==='pin-missed',num=e.wpNum!=null?e.wpNum:''
     const slash=missed?'<path d="M4 4 L30 40" stroke="#fff" stroke-width="4" stroke-linecap="round"/>':''; const anchor=e.container?ANCHOR_BADGE:''
     return `<div style="position:relative;width:${w}px;height:${h}px;filter:drop-shadow(0 1px 2px rgba(20,30,60,.35))"><svg viewBox="0 0 34 44" width="${w}" height="${h}"><path d="M17 43C17 43 32 25 32 15A15 15 0 1 0 2 15C2 25 17 43 17 43Z" fill="${color}" stroke="#fff" stroke-width="2.5"/>${slash}</svg><div style="position:absolute;top:${Math.round(h*0.14)}px;left:0;width:${w}px;text-align:center;font-weight:800;font-size:${Math.round(size*0.44)}px;color:${missed?'#1a2233':'#fff'}">${num}</div>${anchor}</div>` }
   if(shape==='octagon') return `<div style="width:${size}px;height:${size}px"><svg viewBox="0 0 34 34" width="${size}" height="${size}"><path d="M10 2H24L32 10V24L24 32H10L2 24V10Z" fill="${color}" stroke="#fff" stroke-width="2.5" stroke-linejoin="round"/></svg></div>`
-  if(shape==='triangle') return `<div style="position:relative;width:${size}px;height:${size}px"><svg viewBox="0 0 34 34" width="${size}" height="${size}"><path d="M17 3.5 32.5 31H1.5Z" fill="${color}" stroke="#fff" stroke-width="2.5" stroke-linejoin="round"/></svg><span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding-top:${Math.round(size*0.2)}px">${gsvg(e.iconKey,Math.round(size*0.42))}</span></div>`
-  return `<div style="width:${size}px;height:${size}px;border-radius:50%;border:2.5px solid #fff;box-shadow:0 1px 3px rgba(20,30,60,.3);display:flex;align-items:center;justify-content:center;background:${color}">${gsvg(e.iconKey,Math.round(size*0.56))}</div>`
+  if(shape==='triangle') return `<div style="position:relative;width:${size}px;height:${size}px"><svg viewBox="0 0 34 34" width="${size}" height="${size}"><path d="M17 3.5 32.5 31H1.5Z" fill="${color}" stroke="#fff" stroke-width="2.5" stroke-linejoin="round"/></svg><span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding-top:${Math.round(size*0.2)}px">${gsvg(iconKey,Math.round(size*0.42))}</span></div>`
+  return `<div style="width:${size}px;height:${size}px;border-radius:50%;border:2.5px solid #fff;box-shadow:0 1px 3px rgba(20,30,60,.3);display:flex;align-items:center;justify-content:center;background:${color}">${gsvg(iconKey,Math.round(size*0.56))}</div>`
 }
 
 const BASE_CONFIG=[
@@ -63,7 +66,7 @@ const truthy=(v)=>v===true||v==='true'||v===1||v==='1'
 function labelOf(e){ const t=e.type,s=e.status||''
   if(t==='waypoint'||t==='failed_waypoint'){ if(/^Shipment origin/i.test(s))return'Shipment origin'; if(/not reached/i.test(s))return'Destination — not reached'; if(/^Shipment destination/i.test(s))return'Shipment destination'; return e.wpNum?('Waypoint '+e.wpNum):'Waypoint' }
   if(t==='travel')return'In transit — Leg '+(e.legNumber ?? ''); return e.label||t }
-function fmt(t){ if(!t)return''; const d=new Date(String(t).replace(' ','T')); if(Number.isNaN(d.getTime()))return esc(String(t)); return d.toLocaleString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) }
+function fmt(t){ if(t==null||t==='')return''; let d; const n=typeof t==='number'?t:Number(t); if(Number.isFinite(n)&&!/[-:T]/.test(String(t))){ d=new Date(n>1e12?n:n>1e9?n*1000:n); } else { d=new Date(String(t).replace(' ','T')); } if(Number.isNaN(d.getTime()))return esc(String(t)); return d.toLocaleString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) }
 function durTxt(sec){ if(sec==null)return''; const h=sec/3600; return h>=1?' · dwell '+h.toFixed(0)+' hr':' · dwell '+Math.round(sec/60)+' min' }
 function whenText(e){
   if(e.type==='waypoint')return '<b>Arrived</b> '+fmt(e.order)+(e.end?'&nbsp;&nbsp;·&nbsp;&nbsp;<b>Departed</b> '+fmt(e.end)+durTxt(e.dur):'')
@@ -71,7 +74,7 @@ function whenText(e){
   if(e.end)return fmt(e.order)+' – '+fmt(e.end)+(e.dur!=null?' · '+(e.dur/3600).toFixed(0)+' hr':''); return fmt(e.order) }
 function rowHtml(e){
   const mode=e.type==='travel'&&e.legMode?`<span class="badge-mode">${esc(e.legMode)}</span>`:''
-  return `<div class="row"><div class="ico">${markerHtml(e,26)}</div><div class="body"><div class="lbl">${esc(labelOf(e))}${mode}</div><div class="st">${esc(e.status||'')}</div><div class="tm">${whenText(e)}</div></div></div>`
+  return `<div class="row"><div class="ico">${markerHtml(e,30)}</div><div class="body"><div class="lbl">${esc(labelOf(e))}${mode}</div><div class="st">${esc(e.status||'')}</div><div class="tm">${whenText(e)}</div></div></div>`
 }
 
 function usePagedElementData(configId){
