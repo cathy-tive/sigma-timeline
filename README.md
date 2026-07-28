@@ -22,8 +22,8 @@ npm install
 npm run dev
 ```
 
-Open `http://localhost:3002/?demo=1` — real rows for shipment 420890/A1
-(`src/demoData.js`), no Sigma connection needed.
+Open `http://localhost:3002/?demo=1` — a **synthetic sample shipment**
+(`src/demoData.js` — fabricated, no real data), no Sigma connection needed.
 
 ## Wiring it up in Sigma
 
