@@ -74,7 +74,7 @@ function whenText(e){
   if(e.end)return fmt(e.order)+' – '+fmt(e.end)+(e.dur!=null?' · '+(e.dur/3600).toFixed(0)+' hr':''); return fmt(e.order) }
 function rowHtml(e){
   const mode=e.type==='travel'&&e.legMode?`<span class="badge-mode">${esc(e.legMode)}</span>`:''
-  return `<div class="row"><div class="ico">${markerHtml(e,30)}</div><div class="body"><div class="lbl">${esc(labelOf(e))}${mode}</div><div class="st">${esc(e.status||'')}</div><div class="tm">${whenText(e)}</div></div></div>`
+  return `<div class="row"><div class="ico">${markerHtml(e,34)}</div><div class="body"><div class="lbl">${esc(labelOf(e))}${mode}</div><div class="st">${esc(e.status||'')}</div><div class="tm">${whenText(e)}</div></div></div>`
 }
 
 function usePagedElementData(configId){
