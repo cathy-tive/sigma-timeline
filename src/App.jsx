@@ -4,6 +4,7 @@ import { DEMO_EVENTS } from './demoData.js'
 
 const PAGE_SIZE = 25000
 const BUILD = import.meta.env.VITE_BUILD_STAMP || 'local'
+console.info('[shipment timeline] build', BUILD)   // no on-screen label; check the console
 
 // ===== shared icon system (shape + color + icon_key from data) =====
 const GLYPH = {
@@ -123,7 +124,6 @@ export default function App(){
     const top=rows.filter(e=>e.parent==null||!byId.has(String(e.parent))).sort((a,b)=>cmp(a,b)||(a.type==='travel'?1:0))
     let out=`<h2>${esc(config.title||'Event timeline')}</h2>`
     for(const e of top){ out+=rowHtml(e); const ch=(kids.get(String(e.id))||[]).slice().sort(cmp); if(ch.length) out+='<div class="indent">'+ch.map(rowHtml).join('')+'</div>' }
-    out+='<div style="text-align:right;color:#c3ccdb;font-size:9px;padding:8px 14px">build '+BUILD+'</div>'
     return out
   },[rows,config.title])
 
