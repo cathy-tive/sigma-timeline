@@ -39,21 +39,21 @@ function markerHtml(e, size){
 
 const BASE_CONFIG=[
   { name:'events', type:'element' },
-  { name:'eventType', type:'column', source:'events', allowMultiple:false, label:'Event type (required)' },
-  { name:'order', type:'column', source:'events', allowMultiple:false, label:'Event time (ordering)' },
-  { name:'eventEnd', type:'column', source:'events', allowMultiple:false, label:'Event end' },
-  { name:'status', type:'column', source:'events', allowMultiple:false, label:'Status text' },
-  { name:'label', type:'column', source:'events', allowMultiple:false, label:'Display label' },
-  { name:'eventId', type:'column', source:'events', allowMultiple:false, label:'Event id (for nesting)' },
-  { name:'parentId', type:'column', source:'events', allowMultiple:false, label:'Parent event id (nests children)' },
-  { name:'waypointNumber', type:'column', source:'events', allowMultiple:false, label:'Waypoint number — numbers the pins' },
-  { name:'legMode', type:'column', source:'events', allowMultiple:false, label:'Leg mode — transit symbol' },
-  { name:'legNumber', type:'column', source:'events', allowMultiple:false, label:'Leg number — "Leg N"' },
-  { name:'isContainerPort', type:'column', source:'events', allowMultiple:false, label:'Is container port — anchor badge' },
-  { name:'durationSec', type:'column', source:'events', allowMultiple:false, label:'Duration (sec) — dwell' },
-  { name:'iconKey', type:'column', source:'events', allowMultiple:false, label:'Icon key (optional) — typed alert glyphs' },
-  { name:'shape', type:'column', source:'events', allowMultiple:false, label:'Shape (optional) — overrides default' },
-  { name:'color', type:'column', source:'events', allowMultiple:false, label:'Color (optional) — hex, overrides default' },
+  { name:'eventType', type:'column', source:'events', allowMultiple:false },
+  { name:'order', type:'column', source:'events', allowMultiple:false },
+  { name:'eventEnd', type:'column', source:'events', allowMultiple:false },
+  { name:'status', type:'column', source:'events', allowMultiple:false },
+  { name:'label', type:'column', source:'events', allowMultiple:false },
+  { name:'eventId', type:'column', source:'events', allowMultiple:false },
+  { name:'parentId', type:'column', source:'events', allowMultiple:false },
+  { name:'waypointNumber', type:'column', source:'events', allowMultiple:false },
+  { name:'legMode', type:'column', source:'events', allowMultiple:false },
+  { name:'legNumber', type:'column', source:'events', allowMultiple:false },
+  { name:'isContainerPort', type:'column', source:'events', allowMultiple:false },
+  { name:'durationSec', type:'column', source:'events', allowMultiple:false },
+  { name:'iconKey', type:'column', source:'events', allowMultiple:false },
+  { name:'shape', type:'column', source:'events', allowMultiple:false },
+  { name:'color', type:'column', source:'events', allowMultiple:false },
   { name:'Header', type:'group' },
   { name:'title', type:'text', placeholder:'Timeline header (defaults to "Event timeline")' },
 ]
@@ -66,11 +66,13 @@ function labelOf(e){ const t=e.type,s=e.status||''
   if(t==='waypoint'||t==='failed_waypoint'){ if(/^Shipment origin/i.test(s))return'Shipment origin'; if(/not reached/i.test(s))return'Destination — not reached'; if(/^Shipment destination/i.test(s))return'Shipment destination'; return e.wpNum?('Waypoint '+e.wpNum):'Waypoint' }
   if(t==='travel')return'In transit — Leg '+(e.legNumber ?? ''); return e.label||t }
 function fmt(t){ if(t==null||t==='')return''; let d; const n=typeof t==='number'?t:Number(t); if(Number.isFinite(n)&&!/[-:T]/.test(String(t))){ d=new Date(n>1e12?n:n>1e9?n*1000:n); } else { d=new Date(String(t).replace(' ','T')); } if(Number.isNaN(d.getTime()))return esc(String(t)); return d.toLocaleString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) }
-function durTxt(sec){ if(sec==null)return''; const h=sec/3600; return h>=1?' · dwell '+h.toFixed(0)+' hr':' · dwell '+Math.round(sec/60)+' min' }
+// one duration formatter: seconds -> min under an hour, hr above (1 decimal under 10 hr)
+function durStr(sec){ if(sec==null)return''; if(sec<60)return Math.max(1,Math.round(sec))+' sec'; if(sec<3600)return Math.round(sec/60)+' min'; const h=sec/3600; return (h<10?h.toFixed(1):h.toFixed(0))+' hr' }
+function durTxt(sec){ return sec==null?'':' · dwell '+durStr(sec) }
 function whenText(e){
   if(e.type==='waypoint')return '<b>Arrived</b> '+fmt(e.order)+(e.end?'&nbsp;&nbsp;·&nbsp;&nbsp;<b>Departed</b> '+fmt(e.end)+durTxt(e.dur):'')
   if(e.type==='failed_waypoint')return 'Expected here — not reached'+(e.order?' (nearest pass '+fmt(e.order)+')':'')
-  if(e.end)return fmt(e.order)+' – '+fmt(e.end)+(e.dur!=null?' · '+(e.dur/3600).toFixed(0)+' hr':''); return fmt(e.order) }
+  if(e.end)return fmt(e.order)+' – '+fmt(e.end)+(e.dur!=null?' · '+durStr(e.dur):''); return fmt(e.order) }
 function rowHtml(e){
   const mode=e.type==='travel'&&e.legMode?`<span class="badge-mode">${esc(e.legMode)}</span>`:''
   return `<div class="row"><div class="ico">${markerHtml(e,30)}</div><div class="body"><div class="lbl">${esc(labelOf(e))}${mode}</div><div class="st">${esc(e.status||'')}</div><div class="tm">${whenText(e)}</div></div></div>`
