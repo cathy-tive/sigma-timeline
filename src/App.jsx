@@ -103,7 +103,8 @@ export default function App(){
     if(isDemo&&!config.events){
       return { rows: DEMO_EVENTS.map(r=>({ id:r.EVENT_ID, parent:r.PARENT_EVENT_ID, type:r.EVENT_TYPE, order:r.EVENT_TIME, end:r.EVENT_END,
         status:r.STATUS, label:r.DISPLAY_LABEL, legMode:r.LEG_MODE, legNumber:r.LEG_NUMBER, wpNum:r.WAYPOINT_NUMBER,
-        container:!!r.IS_CONTAINER_PORT, color:r.COLOR, shape:r.SHAPE, iconKey:r.ICON_KEY, dur:r.DURATION_SEC })), error:null }
+        container:!!r.IS_CONTAINER_PORT, color:r.COLOR, shape:r.SHAPE, iconKey:r.ICON_KEY, dur:r.DURATION_SEC,
+        arrSrc:r.ARRIVAL_SOURCE, depSrc:r.DEPARTURE_SOURCE })), error:null }
     }
     if(!config.events) return { rows:[], error:'Select an events table in the panel.' }
     if(!config.eventType) return { rows:[], error:'Choose the event type column.' }
@@ -111,12 +112,14 @@ export default function App(){
     const et=col(config.eventType); if(!et) return { rows:[], error:'Loading data…' }
     const id=col(config.eventId),parent=col(config.parentId),ord=col(config.order),end=col(config.eventEnd),status=col(config.status),
       label=col(config.label),mode=col(config.legMode),legn=col(config.legNumber),wp=col(config.waypointNumber),cont=col(config.isContainerPort),
-      color=col(config.color),shape=col(config.shape),ik=col(config.iconKey),dur=col(config.durationSec)
+      color=col(config.color),shape=col(config.shape),ik=col(config.iconKey),dur=col(config.durationSec),
+      asrc=col(config.arrivalSource),dsrc=col(config.departureSource)
     const out=[]
     for(let i=0;i<et.length;i++){
       out.push({ id:id?id[i]:i, parent:parent?parent[i]:null, type:et[i]?String(et[i]):null, order:ord?ord[i]:i, end:end?end[i]:null,
         status:status?status[i]:'', label:label?label[i]:null, legMode:mode?mode[i]:null, legNumber:legn?legn[i]:null,
         wpNum:wp?toNum(wp[i]):null, container:cont?truthy(cont[i]):false, color:color?color[i]:null,
+        arrSrc:asrc?asrc[i]:null, depSrc:dsrc?dsrc[i]:null,
         shape:shape?String(shape[i]||''):null, iconKey:ik?String(ik[i]||''):null, dur:dur?toNum(dur[i]):null })
     }
     return { rows:out, error:out.length?null:'No rows.' }
