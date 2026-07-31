@@ -147,7 +147,11 @@ export default function App(){
     const byId=new Map(rows.map(e=>[String(e.id),e])); const kids=new Map()
     for(const e of rows){ if(e.parent!=null&&byId.has(String(e.parent))){ const k=String(e.parent); if(!kids.has(k))kids.set(k,[]); kids.get(k).push(e) } }
     const cmp=(a,b)=>(a.order>b.order?1:a.order<b.order?-1:0)
-    const top=rows.filter(e=>e.parent==null||!byId.has(String(e.parent))).sort((a,b)=>cmp(a,b)||(a.type==='travel'?1:0))
+    // At equal timestamps, being AT a place (waypoint) precedes transit — a shipment can't be
+    // in transit before it has left its origin. (The old tiebreak was asymmetric: it pushed a
+    // travel row down only when it was the FIRST arg, so origin/leg ties ordered arbitrarily.)
+    const rank=(e)=>(e.type==='travel'?1:0)
+    const top=rows.filter(e=>e.parent==null||!byId.has(String(e.parent))).sort((a,b)=>cmp(a,b)||(rank(a)-rank(b)))
     let out=`<h2>${esc(config.title||'Event timeline')}</h2>`
     for(const e of top){
       const ch=(kids.get(String(e.id))||[]).slice().sort(cmp)
