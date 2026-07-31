@@ -18,5 +18,17 @@ html,body,#root{height:100%;margin:0;font-family:-apple-system,BlinkMacSystemFon
 .tm b{color:var(--slate);font-weight:700}
 .tm .src{color:#8894a8;font-weight:600}
 .indent{margin-left:24px;border-left:2px solid var(--line);padding-left:14px}
+/* Expandable spans: the summary (span row + child roll-up) is the collapsed top level. */
+details.span>summary{list-style:none;cursor:pointer;position:relative}
+details.span>summary::-webkit-details-marker{display:none}
+details.span>summary .row{padding-left:18px}
+details.span>summary::before{content:'';position:absolute;left:6px;top:16px;width:6px;height:6px;
+  border-right:2px solid #9aa4b8;border-bottom:2px solid #9aa4b8;transform:rotate(-45deg);transition:transform .15s}
+details.span[open]>summary::before{transform:rotate(45deg)}
+details.span>summary:hover .lbl{color:var(--reached)}
+.summary-chips{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 8px 62px}
+details.span[open] .summary-chips{display:none}          /* detail replaces the roll-up when open */
+.chip{font-size:11px;color:var(--slate);background:#eef2f9;border-radius:10px;padding:1px 8px;white-space:nowrap}
+.chip-warn{color:#9a3412;background:#fdece4}
 .badge-mode{font-size:10.5px;font-weight:700;color:var(--slate);background:#eef2f9;border-radius:5px;padding:1px 6px;margin-left:6px;vertical-align:middle}
 .plugin-message{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:24px;color:#6b7280;font-size:14px;text-align:center}

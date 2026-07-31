@@ -84,6 +84,23 @@ function rowHtml(e){
   const mode=e.type==='travel'&&e.legMode?`<span class="badge-mode">${esc(e.legMode)}</span>`:''
   return `<div class="row"><div class="ico">${markerHtml(e,30)}</div><div class="body"><div class="lbl">${esc(labelOf(e))}${mode}</div><div class="st">${esc(e.status||'')}</div><div class="tm">${whenText(e)}</div></div></div>`
 }
+// One-line roll-up of what happened during a span, shown at the top level (collapsed);
+// the peak temperature is worth calling out inline since it's the headline of an excursion.
+function summarize(ch){
+  const n={}; for(const e of ch) n[e.type]=(n[e.type]||0)+1
+  const chips=[]
+  const add=(c,one,many)=>{ if(c) chips.push(`<span class="chip">${c} ${c===1?one:many}</span>`) }
+  add(n['unplanned stop'],'stop','stops')
+  if(n['temp_out_of_range']){
+    let peak=null; for(const e of ch){ if(e.type==='temp_out_of_range'){ const m=/peaked\s+(-?[\d.]+)/i.exec(e.status||''); if(m) peak=Math.max(peak??-1e9, parseFloat(m[1])) } }
+    const c=n['temp_out_of_range']
+    chips.push(`<span class="chip chip-warn">${c} temp excursion${c===1?'':'s'}${peak!=null?` · peak ${Math.round(peak*10)/10}°`:''}</span>`)
+  }
+  add(n['alert'],'alert','alerts')
+  add(n['carrier_change'],'carrier change','carrier changes')
+  add((n['loading']||0)+(n['unloading']||0),'cargo event','cargo events')
+  return chips.length ? `<div class="summary-chips">${chips.join('')}</div>` : ''
+}
 
 function usePagedElementData(configId){
   const [data,loadMore]=usePaginatedElementData(configId)
@@ -132,7 +149,16 @@ export default function App(){
     const cmp=(a,b)=>(a.order>b.order?1:a.order<b.order?-1:0)
     const top=rows.filter(e=>e.parent==null||!byId.has(String(e.parent))).sort((a,b)=>cmp(a,b)||(a.type==='travel'?1:0))
     let out=`<h2>${esc(config.title||'Event timeline')}</h2>`
-    for(const e of top){ out+=rowHtml(e); const ch=(kids.get(String(e.id))||[]).slice().sort(cmp); if(ch.length) out+='<div class="indent">'+ch.map(rowHtml).join('')+'</div>' }
+    for(const e of top){
+      const ch=(kids.get(String(e.id))||[]).slice().sort(cmp)
+      if(ch.length){
+        // span with nested events -> collapsible; summary (with child roll-up) is the top level
+        out+='<details class="span"><summary>'+rowHtml(e)+summarize(ch)+'</summary>'
+            +'<div class="indent">'+ch.map(rowHtml).join('')+'</div></details>'
+      } else {
+        out+=rowHtml(e)
+      }
+    }
     return out
   },[rows,config.title])
 
