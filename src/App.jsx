@@ -52,6 +52,8 @@ const BASE_CONFIG=[
   { name:'legNumber', type:'column', source:'events', allowMultiple:false, label:'Leg number' },
   { name:'isContainerPort', type:'column', source:'events', allowMultiple:false, label:'Container port' },
   { name:'durationSec', type:'column', source:'events', allowMultiple:false, label:'Duration (sec)' },
+  { name:'arrivalSource', type:'column', source:'events', allowMultiple:false, label:'Arrival source' },
+  { name:'departureSource', type:'column', source:'events', allowMultiple:false, label:'Departure source' },
   { name:'iconKey', type:'column', source:'events', allowMultiple:false, label:'Icon key' },
   { name:'shape', type:'column', source:'events', allowMultiple:false, label:'Shape' },
   { name:'color', type:'column', source:'events', allowMultiple:false, label:'Color' },
@@ -69,9 +71,13 @@ function labelOf(e){ const t=e.type,s=e.status||''
 function fmt(t){ if(t==null||t==='')return''; let d; const n=typeof t==='number'?t:Number(t); if(Number.isFinite(n)&&!/[-:T]/.test(String(t))){ d=new Date(n>1e12?n:n>1e9?n*1000:n); } else { d=new Date(String(t).replace(' ','T')); } if(Number.isNaN(d.getTime()))return esc(String(t)); return d.toLocaleString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) }
 // one duration formatter: seconds -> min under an hour, hr above (1 decimal under 10 hr)
 function durStr(sec){ if(sec==null)return''; if(sec<60)return Math.max(1,Math.round(sec))+' sec'; if(sec<3600)return Math.round(sec/60)+' min'; const h=sec/3600; return (h<10?h.toFixed(1):h.toFixed(0))+' hr' }
+// Provenance: say so when a boundary time came from the carrier's container gate feed
+// (rare but strong evidence). Tracker-derived times are the default and stay unlabelled.
+function srcTag(src){ return src==='container' ? ' <span class="src">(container gate)</span>' : '' }
 function durTxt(sec){ return sec==null?'':' · dwell '+durStr(sec) }
 function whenText(e){
-  if(e.type==='waypoint')return '<b>Arrived</b> '+fmt(e.order)+(e.end?'&nbsp;&nbsp;·&nbsp;&nbsp;<b>Departed</b> '+fmt(e.end)+durTxt(e.dur):'')
+  if(e.type==='waypoint')return '<b>Arrived</b> '+fmt(e.order)+srcTag(e.arrSrc)
+    +(e.end?'&nbsp;&nbsp;·&nbsp;&nbsp;<b>Departed</b> '+fmt(e.end)+srcTag(e.depSrc)+durTxt(e.dur):'')
   if(e.type==='failed_waypoint')return 'Expected here — not reached'+(e.order?' (nearest pass '+fmt(e.order)+')':'')
   if(e.end)return fmt(e.order)+' – '+fmt(e.end)+(e.dur!=null?' · '+durStr(e.dur):''); return fmt(e.order) }
 function rowHtml(e){
